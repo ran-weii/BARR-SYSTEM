@@ -50,6 +50,19 @@ def IMUreader(Arduino):
         break
     return record_row
 
+def I2Creader(Arduino): 
+    line = Arduino.readline().decode('utf-8').replace('\r\n', '')
+    line = line.split(',')
+    print(line)
+    reading = []
+    for element in line: 
+        try:
+            current_element = float(element)
+        except ValueError: 
+            current_element = float('NaN')
+        reading.append(current_element)
+    return reading
+
 def DataRead(file_dir): 
     with open(file_dir, 'r') as input_file: 
         headers = next(csv.reader(input_file)) 
