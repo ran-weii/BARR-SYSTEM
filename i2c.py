@@ -55,37 +55,40 @@ with open(file_dir2, 'w') as ourput_file:
 plt.ion()
 plt.figure
 start = time.time()
-while time.time() - start < 3:
+while time.time() - start < 60:
     tnow = time.time() - start 
+    print('current time:', tnow)
     record1, record2 = I2Creader(ard)
     record1.insert(0, tnow)
     record2.insert(0, tnow)
+    # print(record1)
+    # print(record2)
     # print(len(record1))
     if len(record1) > 1 or len(record2) > 1:
     # print(record_row)
         with open(file_dir1, 'a') as output_file:
             csv.writer(output_file).writerow(record1)     
-            print('Saving to database')       
+            # print('Saving to database')       
         with open(file_dir2, 'a') as output_file:
             csv.writer(output_file).writerow(record2)  
-            print('Saving to database')  
+            # print('Saving to database')  
     
-    data = DataRead(file_dir1)  
-    print(data)
-    plt.clf()
-    if len(data) > 0:
+    # data = DataRead(file_dir1)  
+    # print(data)
+    # plt.clf()
+    # if len(data) > 0:
     
-        plt.plot(data[0], [i - np.mean(data[1]) for i in data[1]])
-        plt.plot(data[0], [i - np.mean(data[2]) for i in data[2]])
-        plt.plot(data[0], [i - np.mean(data[3]) for i in data[3]])
-        # else: 
-        #     plt.plot(data[0][-15:], data[1][-15:])
-        #     plt.plot(data[0][-15:], data[2][-15:])
-        #     plt.plot(data[0][-15:], data[3][-15:])
-        plt.xlabel('Time (s)')
-        plt.ylabel('Acceleration (g)')
-        # plt.ylim(-2, 2)
-        plt.legend(['X', 'Y', 'Z'])
-        plt.title('IMU Acceleration Plot')
-        plt.pause(0.01)
+    #     plt.plot(data[0], [i - np.mean(data[1]) for i in data[1]])
+    #     plt.plot(data[0], [i - np.mean(data[2]) for i in data[2]])
+    #     plt.plot(data[0], [i - np.mean(data[3]) for i in data[3]])
+    #     # else: 
+    #     #     plt.plot(data[0][-15:], data[1][-15:])
+    #     #     plt.plot(data[0][-15:], data[2][-15:])
+    #     #     plt.plot(data[0][-15:], data[3][-15:])
+    #     plt.xlabel('Time (s)')
+    #     plt.ylabel('Acceleration (g)')
+    #     # plt.ylim(-2, 2)
+    #     plt.legend(['X', 'Y', 'Z'])
+    #     plt.title('IMU Acceleration Plot')
+    #     plt.pause(0.01)
 ard.close() 
