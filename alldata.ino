@@ -27,7 +27,7 @@ void tcaselect(uint8_t i) {
 MPU9250 mySensor;
 
 uint8_t sensorId;
-float tnow, a1X, a2X, a3X, a1Y, a2Y, a3Y, a1Z, a2Z, a3Z, g1X, g2X, g3X, g1Y, g2Y, g3Y, g1Z, g2Z, g3Z;
+float tnow, a1X, a1Y, a1Z, g1X, g1Y, g1Z, m1X, m1Y, m1Z, a2X, a2Y, a2Z, g2X, g2Y, g2Z, m2X, m2Y, m2Z;
 
 void setup() {
   while(!Serial);
@@ -38,8 +38,8 @@ void setup() {
 #else
   Wire.begin();
 #endif
+  tcaselect(1);
   tcaselect(2);
-  tcaselect(4);
   tcaselect(6);
   mySensor.setWire(&Wire);
   mySensor.beginAccel();
@@ -55,7 +55,7 @@ void setup() {
 
 void loop() {
   
-  tcaselect(2); //input pin number 
+  tcaselect(1); //input pin number 
   mySensor.accelUpdate();
   a1X = mySensor.accelX();
   a1Y = mySensor.accelY();
@@ -66,7 +66,12 @@ void loop() {
   g1Y = mySensor.gyroY();
   g1Z = mySensor.gyroZ();
   
-  tcaselect(4); //input pin number 
+  mySensor.magUpdate();
+  m1X = mySensor.magX();
+  m1Y = mySensor.magY();
+  m1Z = mySensor.magZ();
+  
+  tcaselect(2); //input pin number 
   mySensor.accelUpdate();
   a2X = mySensor.accelX();
   a2Y = mySensor.accelY();
@@ -77,102 +82,23 @@ void loop() {
   g2Y = mySensor.gyroY();
   g2Z = mySensor.gyroZ();
 
-  
-  
-  // tcaselect(4);
-  // mySensor.accelUpdate();
-  // a2X = mySensor.accelX();
+  mySensor.magUpdate();
+  m2X = mySensor.magX();
+  m2Y = mySensor.magY();
+  m2Z = mySensor.magZ();  
 
-  // tcaselect(6);
-  // mySensor.accelUpdate();
-  // a3X = mySensor.accelX();
-
-  // tcaselect(2);
-  // mySensor.accelUpdate();
-  // a1Y = mySensor.accelY();
-  
-  // tcaselect(4);
-  // mySensor.accelUpdate();
-  // a2Y = mySensor.accelY();
-
-  // tcaselect(6);
-  // mySensor.accelUpdate();
-  // a3Y = mySensor.accelY();
-
-
-  // tcaselect(2);
-  // mySensor.accelUpdate();
-  // a1Z = mySensor.accelZ();
-  
-  // tcaselect(4);
-  // mySensor.accelUpdate();
-  // a2Z = mySensor.accelZ();
-
-  // tcaselect(6);
-  // mySensor.accelUpdate();
-  // a3Z = mySensor.accelZ();
-
-
-
-
-
-
-
-
-
-
-  // tcaselect(2);
-  // mySensor.gyroUpdate();
-  // g1X = mySensor.gyroX();
-  
-  // tcaselect(4);
-  // mySensor.gyroUpdate();
-  // g2X = mySensor.gyroX();
-
-  // tcaselect(6);
-  // mySensor.gyroUpdate();
-  // g3X = mySensor.gyroX();
-
-  // tcaselect(2);
-  // mySensor.gyroUpdate();
-  // g1Y = mySensor.gyroY();
-  
-  // tcaselect(4);
-  // mySensor.gyroUpdate();
-  // g2Y = mySensor.gyroY();
-
-  // tcaselect(6);
-  // mySensor.gyroUpdate();
-  // g3Y = mySensor.gyroY();
-
-
-  // tcaselect(2);
-  // mySensor.gyroUpdate();
-  // g1Z = mySensor.gyroZ();
-  
-  // tcaselect(4);
-  // mySensor.gyroUpdate();
-  // g2Z = mySensor.gyroZ();
-
-  // tcaselect(6);
-  // mySensor.gyroUpdate();
-  // g3Z = mySensor.gyroZ();
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
-  Serial.println(String(1) + "," + String(a1X) + "," + String(a1Y) + "," + String(a1Z) + "," + 
-  String(g1X) + "," + String(g1Y) + "," + String(g1Z));
-  Serial.println(String(2) + "," + String(a2X) + "," + String(a2Y) + "," + String(a2Z) + "," + 
-  String(g2X) + "," + String(g2Y) + "," + String(g2Z));
-
-
-
-
- // Serial.println("at " + String(millis()) + "ms");
- // Serial.println(""); // Add an empty line
+  Serial.println(String("x") + "," + String("a:") + String(a1X) + "," + String("b:") + String(a1Y) + "," + String("c:") + String(a1Z) + "," + 
+  String("d:") + String(g1X) + "," + String("e:") + String(g1Y) + "," + String("f:") + String(g1Z) + "," + 
+  String("g:") + String(m1X) + "," + String("h:") + String(m1Y) + "," + String("i:") + String(m1Z)+ "," + 
+  String("y") + "," + String("a:") + String(a2X) + "," + String("b:") + String(a2Y) + "," + String("c:") + String(a2Z) + "," + 
+  String("d:") + String(g2X) + "," + String("e:") + String(g2Y) + "," + String("f:") + String(g2Z) + "," + 
+  String("g:") + String(m2X) + "," + String("h:") + String(m2Y) + "," + String("i:") + String(m2Z)); 
 
  
   delay(5);
