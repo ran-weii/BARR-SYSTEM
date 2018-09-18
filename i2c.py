@@ -3,21 +3,24 @@
 # BARR SYSTEM 
 # Arduino - Python communication 
 # 
+# This script is currently able to read from serial port, saving in csv file,
+# and read from csv file
+# 
 # PLEASE DO NOT EDIT WITHOUT PROPER DISCUSSION WITH THE GROUP 
 # 
 # ====================================================================
 
 import serial
-import re
+# import re
 import time
 import numpy as np
 from matplotlib import pyplot as plt
-import pyqtgraph as pg
-from pyqtgraph.Qt import QtCore, QtGui
-import os
-import pyqtgraph.console
-import PyQt5
-import pylab
+# import pyqtgraph as pg
+# from pyqtgraph.Qt import QtCore, QtGui
+# import os
+# import pyqtgraph.console
+# import PyQt5
+# import pylab
 import keyboard # for keyboard interruption 
 import csv 
 from functions import I2Creader, DataRead
@@ -32,6 +35,8 @@ from functions import I2Creader, DataRead
 port  = '/dev/cu.usbmodem1411' #'COM' for windows
 rate = 115200
 ard = serial.Serial(port, rate)
+
+time.sleep(0.003) # wait 0.005 sec for Arduino
 
 if ard.read():
     print('Arduino active...')
@@ -73,22 +78,22 @@ while time.time() - start < 60:
             csv.writer(output_file).writerow(record2)  
             # print('Saving to database')  
     
-    # data = DataRead(file_dir1)  
-    # print(data)
-    # plt.clf()
-    # if len(data) > 0:
+    data = DataRead(file_dir1)  
+    print(data)
+    plt.clf()
+    if len(data) > 0:
     
-    #     plt.plot(data[0], [i - np.mean(data[1]) for i in data[1]])
-    #     plt.plot(data[0], [i - np.mean(data[2]) for i in data[2]])
-    #     plt.plot(data[0], [i - np.mean(data[3]) for i in data[3]])
-    #     # else: 
-    #     #     plt.plot(data[0][-15:], data[1][-15:])
-    #     #     plt.plot(data[0][-15:], data[2][-15:])
-    #     #     plt.plot(data[0][-15:], data[3][-15:])
-    #     plt.xlabel('Time (s)')
-    #     plt.ylabel('Acceleration (g)')
-    #     # plt.ylim(-2, 2)
-    #     plt.legend(['X', 'Y', 'Z'])
-    #     plt.title('IMU Acceleration Plot')
-    #     plt.pause(0.01)
+        plt.plot(data[0], [i - np.mean(data[1]) for i in data[1]])
+        plt.plot(data[0], [i - np.mean(data[2]) for i in data[2]])
+        plt.plot(data[0], [i - np.mean(data[3]) for i in data[3]])
+        # else: 
+        #     plt.plot(data[0][-15:], data[1][-15:])
+        #     plt.plot(data[0][-15:], data[2][-15:])
+        #     plt.plot(data[0][-15:], data[3][-15:])
+        plt.xlabel('Time (s)')
+        plt.ylabel('Acceleration (g)')
+        # plt.ylim(-2, 2)
+        plt.legend(['X', 'Y', 'Z'])
+        plt.title('IMU Acceleration Plot')
+        plt.pause(0.01)
 ard.close() 
