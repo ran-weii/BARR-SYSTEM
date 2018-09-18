@@ -15,6 +15,7 @@ import matplotlib.animation as animation
 #====================================================================
 
 class KalmanFilter(object):
+    # kalman filter copied from web 
    def __init__(self, process_variance, estimated_measurement_variance):
        self.process_variance = process_variance
        self.estimated_measurement_variance = estimated_measurement_variance
@@ -32,49 +33,39 @@ class KalmanFilter(object):
    def get_latest_estimated_measurement(self):
        return self.posteri_estimate
 
-def IMUreader(Arduino): 
-    record_row = []
-    while True: 
-        line = Arduino.readline().decode('utf-8')
-        if 'sensorId' in line: 
-            while len(record_row) < 12: 
-                line = Arduino.readline().decode('utf-8')
-                if 'sensorId' in line: 
-                    pass 
-                elif ':' in line: 
-                    IMUreading = float(line.split(':')[1])
-                    record_row.append(IMUreading)
-                elif 'ms' in line: 
-                    t = float(line.split(' ')[1].split('ms')[0])/1000
-                    record_row = [t] + record_row 
-        break
-    return record_row
 
-# read and parse from arduino 
 def I2Creader(Arduino): 
+    # this function reads string from the port, split into sensor 1 & 2, parse by comma, and match with the dictionary 
     line = Arduino.readline().decode('utf-8').replace('\r\n', '')
 
-    reading1 = {"a": None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None}
-    reading2 = {"a": None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None}
+    # define dict/matching format 
+    reading1 = {'t': None, 'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None}
+    reading2 = {'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None}
+    
     if 'y' in line: # identify sensor 2 
         line = line.split('y')
-        if line.count('y') > 1: # if there are multiple sets of sensor 2 readings 
+        # if there are multiple sets of sensor 2 readings keep the first one and delete the rest 
+        if line.count('y') > 1:
             line = line[:-1]
         
-        line2 = line[1].split(',')
-        line1 = line[0].split(',')
-        # print('sensor1', line1, 'sensor2', line2)
-
-        for k in range(len(line1)):
+        line2 = line[1].split(',') # sensor 1
+        line1 = line[0].split(',') # sensor 2 
+        
+        tnow = 0 
+        # match column title and update dict 
+        for k in range(len(line1)): # sensor 1
             current_element = line1[k].split(':')
             if current_element[0] in reading1: 
                 try:
                     value = float(current_element[1])
+                    if current_element[0] == 't': 
+                        value = value/1000
+                        tnow = value
                 except ValueError: 
                     value = float('NaN')
                 reading1[current_element[0]] = value 
-        # print(list(reading1.values()))
-        for k in range(len(line2)):
+        
+        for k in range(len(line2)): # sensor 2
             current_element = line2[k].split(':')
             if current_element[0] in reading2: 
                 try:
@@ -83,20 +74,21 @@ def I2Creader(Arduino):
                     value = float('NaN')
                     print('value converting mistake, exporting')
                 reading2[current_element[0]] = value  
-        # print(list(reading2.values()))
+    # convert dict to list 
     record1 = list(reading1.values())
-    # print(record1)
-    record2 = list(reading2.values())
-    # print(record2)
+    record2 = tnow + list(reading2.values())
+    print('current time:', tnow)
     print('Sensor1:', record1, 'Sensor2:', record2)
     
     return record1, record2
 
 def DataRead(file_dir): 
+    # read raw reading from local csv files 
     with open(file_dir, 'r') as input_file: 
         headers = next(csv.reader(input_file)) 
     columns = defaultdict(list)
     print('Pulling from database')
+    # read into dict 
     with open(file_dir, 'r') as input_file: 
         for row in csv.DictReader(input_file): # read a row as {column1: value1, column2: value2,...}
             for (k,v) in row.items(): # go over each column name and value 
