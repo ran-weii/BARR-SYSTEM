@@ -1,11 +1,12 @@
-# ====================================================================
-# 
-# BARR SYSTEM 
-# Function library 
-# 
-# PLEASE DO NOT EDIT WITHOUT PROPER DISCUSSION WITH THE GROUP 
-# 
-# ====================================================================
+'''
+====================================================================
+BARR SYSTEM 
+Function library 
+
+PLEASE DO NOT EDIT WITHOUT PROPER DISCUSSION WITH THE GROUP 
+====================================================================
+'''
+
 import sys 
 import glob 
 import serial 
@@ -51,16 +52,38 @@ def serial_ports():
 if __name__ == '__main__':
     print(serial_ports())
 
+def IMUreader(Arduino):
+    while True: 
+        try: 
+            line = Arduino.readline().decode('utf-8').replace('\r\n', '')
+        except UnicodeDecodeError: 
+            pass 
+    
+    line = line.split(',')
+    reading = {'t': None, 'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None, 'j': None, 'k': None, 'l': None, 'm': None, 'n': None, 'o': None, 'p': None}
+    
+    for k in range(len(line)): 
+            current_element = line[k].split(':')
+            if current_element[0] in reading: 
+                try:
+                    value = float(current_element[1])
+                except ValueError: 
+                    value = None
+                    print('value converting mistake, exporting')
+                reading[current_element[0]] = value 
+    record = list(reading.values()) 
+    return record
+
 def I2Creader(Arduino): 
     # this function reads string from the port, split into sensor 1 & 2, parse by comma, and match with the dictionary 
     try: 
         line = Arduino.readline().decode('utf-8').replace('\r\n', '')
     except UnicodeDecodeError: 
         pass 
-
+    print(line)
     # define dict/matching format 
-    reading1 = {'t': None, 'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None}
-    reading2 = {'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None}
+    reading1 = {'t': None, 'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None, 'j': None, 'k': None, 'l': None, 'm': None, 'n': None, 'o': None, 'p': None}
+    reading2 = {'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None, 'j': None, 'k': None, 'l': None, 'm': None, 'n': None, 'o': None, 'p': None}
     
     if 'y' in line: # identify sensor 2 
         line = line.split('y')
@@ -69,7 +92,8 @@ def I2Creader(Arduino):
             line = line[:-1]
         line2 = line[1].split(',') # sensor 1
         line1 = line[0].split(',') # sensor 2 
-        
+        # print('sensor1:', line1)
+        # print('sensor2:', line2)
         tnow = 0 
         # match column title and update dict 
         for k in range(len(line1)): # sensor 1
