@@ -80,7 +80,7 @@ def I2Creader(Arduino):
         line = Arduino.readline().decode('utf-8').replace('\r\n', '')
     except UnicodeDecodeError: 
         pass 
-    print(line)
+    # print(line)
     # define dict/matching format 
     reading1 = {'t': None, 'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None, 'j': None, 'k': None, 'l': None, 'm': None, 'n': None, 'o': None, 'p': None}
     reading2 = {'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None, 'j': None, 'k': None, 'l': None, 'm': None, 'n': None, 'o': None, 'p': None}
@@ -90,35 +90,37 @@ def I2Creader(Arduino):
         # if there are multiple sets of sensor 2 readings keep the first one and remove the rest 
         if line.count('y') > 1:
             line = line[:-1]
-        line2 = line[1].split(',') # sensor 1
-        line1 = line[0].split(',') # sensor 2 
-        # print('sensor1:', line1)
-        # print('sensor2:', line2)
+        line2 = line[1].split('\t') # sensor 1
+        line1 = line[0].split('\t') # sensor 2 
+        print('sensor1:', line1)
+        print('sensor2:', line2)
         tnow = 0 
         # match column title and update dict 
         for k in range(len(line1)): # sensor 1
             current_element = line1[k].split(':')
-            if current_element[0] in reading1: 
+            header = current_element[0].replace(' ', '')
+            if header in reading1: 
                 try:
                     value = float(current_element[1])
                     if 't' in current_element[0]: 
                         current_element[0]
-                        value = value/1000
+                        # value = value/1000
                         tnow = value
                         # print('current time:', tnow)
                 except ValueError: 
                     value = None 
-                reading1[current_element[0]] = value 
+                reading1[header] = value 
         
         for k in range(len(line2)): # sensor 2
             current_element = line2[k].split(':')
-            if current_element[0] in reading2: 
+            header = current_element[0].replace(' ', '')
+            if header in reading2: 
                 try:
                     value = float(current_element[1])
                 except ValueError: 
                     value = None
                     print('value converting mistake, exporting')
-                reading2[current_element[0]] = value  
+                reading2[header] = value  
     # convert dict to list 
     record1 = list(reading1.values())
     record2 = list(reading2.values())
