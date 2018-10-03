@@ -1,13 +1,8 @@
 # ====================================================================
-# 
-# BARR SYSTEM 
-# Arduino - Python communication 
-# 
-# This script is currently able to read from serial port, saving in csv file,
-# and read from csv file
-# 
-# PLEASE DO NOT EDIT WITHOUT PROPER DISCUSSION WITH THE GROUP 
-# 
+'''
+BARR SYSTEM 
+This script is customized for testing 2 sensor
+'''
 # ====================================================================
 
 import serial
@@ -27,19 +22,22 @@ from functions import serial_ports, I2Creader, DataRead
 #====================================================================
 
 # define serial port
-# port  = '/dev/cu.wchusbserial1410' # 1410/1420 'COM' for windows 
 port = serial_ports()[0]
 print('Current Port:', port)
-rate = 115200
+rate = 9600
 ard = serial.Serial(port, rate)
 # time.sleep(0.003) # wait 0.003 sec for Arduino
 
-test_name = ''
+# interactive test set-up
+test_name = input('Test Name:')
+trial_num = input('Trial Number:')
+duration = float(input('Testing Duration:'))
+
 # create output csv file 
 title = ['Timestamp', 'Acc X', 'Acc Y', 'Acc Z', 'Gyr X', 'Gyr Y', 'Gyr Z', 'Mag X', 'Mag Y', 'Mag Z']
 store_dir = '/Users/apple/Documents/Documents/GitHub/BARR-SYSTEM/output/'
-file1_dir = store_dir + test_name + 'sensor1.csv'
-file2_dir = store_dir + test_name + 'sensor2.csv'
+file1_dir = store_dir + test_name + '_' + trial_num + '_' + 'sensor1.csv'
+file2_dir = store_dir + test_name + '_' + trial_num + '_' + 'sensor2.csv'
 
 with open(file1_dir, 'w') as ourput_file:
     writer = csv.writer(ourput_file, delimiter = ',', lineterminator='\n')  
@@ -51,12 +49,10 @@ with open(file2_dir, 'w') as ourput_file:
 plt.ion()
 plt.figure
 start = time.time()
-while time.time() - start < 2:
+while time.time() - start < duration:
     tnow = time.time() - start 
     print('current time:', round(tnow,2), 's')
     record1, record2 = I2Creader(ard)
-    # record1.insert(0, tnow)
-    # record2.insert(0, tnow)
     if len(record1) > 1 or len(record2) > 1:
         with open(file1_dir, 'a') as output_file:
             csv.writer(output_file).writerow(record1)       
