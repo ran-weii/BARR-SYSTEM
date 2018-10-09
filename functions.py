@@ -20,14 +20,13 @@ import matplotlib.animation as animation
 
 def serial_ports():
     """ list avaliable non bluetooth serial port 
-
         :raises EnvironmentError:
             On unsupported or unknown platforms
         :returns:
             A list of the serial ports available on the system
     """
     if sys.platform.startswith('win'):
-        ports = ['COM%s' % (i + 1) for i in range(256)]
+        ports = ['COM%d' % (i + 1) for i in range(256)]
     elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
         # this excludes your current terminal "/dev/tty"
         ports = glob.glob('/dev/tty[A-Za-z]*')
@@ -35,22 +34,24 @@ def serial_ports():
         ports = glob.glob('/dev/tty.*')
     else:
         raise EnvironmentError('Unsupported platform')
+    result=[]
 
-    result = []
     for port in ports:
         try:
             s = serial.Serial(port)
             s.close()
             if 'Bluetooth' not in port:
                 result.append(port)
-        except (OSError, serial.SerialException):
+        except serial.SerialException:
             pass
     
-    return result
-
+    print(result[0])
+    return (result[0])
+    print (result).strip('[]')
 
 if __name__ == '__main__':
     print(serial_ports())
+    
 
 def IMUreader(Arduino):
     while True: 
@@ -76,29 +77,34 @@ def IMUreader(Arduino):
 
 def I2Creader(Arduino): 
     # this function reads string from the port, split into sensor 1 & 2, parse by comma, and match with the dictionary 
+    flag = 0
     try: 
         line = Arduino.readline().decode('utf-8').replace('\r\n', '')
+        line = line.replace(' ', '')
+        line = line.replace('\t', '')
+        # log only when there is 1 x and 1 y)
+        if line.count('y') == 1 and line.count('x') == 1:
+            line = line.split('y')
+            line1 = line[0].split(',') # sensor 1
+            line2 = line[1].split(',') # sensor 2
+            # print('sensor1:', line1)
+            # print('sensor2:', line2)
+            flag = 1
+        else: 
+            pass
     except UnicodeDecodeError: 
         pass 
     # print(line)
     # define dict/matching format 
     reading1 = {'t': None, 'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None, 'j': None, 'k': None, 'l': None, 'm': None, 'n': None, 'o': None, 'p': None}
     reading2 = {'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None, 'j': None, 'k': None, 'l': None, 'm': None, 'n': None, 'o': None, 'p': None}
-    
-    if 'y' in line: # identify sensor 2 
-        line = line.split('y')
-        # if there are multiple sets of sensor 2 readings keep the first one and remove the rest 
-        if line.count('y') > 1:
-            line = line[:-1]
-        line2 = line[1].split('\t') # sensor 1
-        line1 = line[0].split('\t') # sensor 2 
-        print('sensor1:', line1)
-        print('sensor2:', line2)
-        tnow = 0 
+    tnow = None
+#    print('flag:', flag)
+    if flag == 1:
         # match column title and update dict 
         for k in range(len(line1)): # sensor 1
             current_element = line1[k].split(':')
-            header = current_element[0].replace(' ', '')
+            header = current_element[0]
             if header in reading1: 
                 try:
                     value = float(current_element[1])
@@ -121,6 +127,8 @@ def I2Creader(Arduino):
                     value = None
                     print('value converting mistake, exporting')
                 reading2[header] = value  
+    else: 
+        pass 
     # convert dict to list 
     record1 = list(reading1.values())
     record2 = list(reading2.values())
