@@ -20,13 +20,14 @@ import matplotlib.animation as animation
 
 def serial_ports():
     """ list avaliable non bluetooth serial port 
+
         :raises EnvironmentError:
             On unsupported or unknown platforms
         :returns:
             A list of the serial ports available on the system
     """
     if sys.platform.startswith('win'):
-        ports = ['COM%d' % (i + 1) for i in range(256)]
+        ports = ['COM%s' % (i + 1) for i in range(256)]
     elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
         # this excludes your current terminal "/dev/tty"
         ports = glob.glob('/dev/tty[A-Za-z]*')
@@ -34,24 +35,22 @@ def serial_ports():
         ports = glob.glob('/dev/tty.*')
     else:
         raise EnvironmentError('Unsupported platform')
-    result=[]
 
+    result = []
     for port in ports:
         try:
             s = serial.Serial(port)
             s.close()
             if 'Bluetooth' not in port:
                 result.append(port)
-        except serial.SerialException:
+        except (OSError, serial.SerialException):
             pass
     
-    print(result[0])
-    return (result[0])
-    print (result).strip('[]')
+    return result
+
 
 if __name__ == '__main__':
     print(serial_ports())
-    
 
 def IMUreader(Arduino):
     while True: 
@@ -82,6 +81,7 @@ def I2Creader(Arduino):
         line = Arduino.readline().decode('utf-8').replace('\r\n', '')
         line = line.replace(' ', '')
         line = line.replace('\t', '')
+        print('raw:', line)
         # log only when there is 1 x and 1 y)
         if line.count('y') == 1 and line.count('x') == 1:
             line = line.split('y')
@@ -99,7 +99,7 @@ def I2Creader(Arduino):
     reading1 = {'t': None, 'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None, 'j': None, 'k': None, 'l': None, 'm': None, 'n': None, 'o': None, 'p': None}
     reading2 = {'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None, 'j': None, 'k': None, 'l': None, 'm': None, 'n': None, 'o': None, 'p': None}
     tnow = None
-#    print('flag:', flag)
+    # print('flag:', flag)
     if flag == 1:
         # match column title and update dict 
         for k in range(len(line1)): # sensor 1
@@ -151,7 +151,9 @@ def DataRead(file_dir):
     raw = []
     for j in range(len(headers)): 
         current = []
+        # print('column', j)
         for i in columns[headers[j]]: 
+            # print(i)
             try: 
                 current.append(float(i))
             except ValueError: 
