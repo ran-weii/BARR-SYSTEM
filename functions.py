@@ -11,6 +11,8 @@ import sys
 import glob 
 import serial 
 import csv 
+import math
+import numpy as np
 from collections import defaultdict
 import matplotlib.animation as animation 
 
@@ -49,31 +51,6 @@ def serial_ports():
     return result
 
 
-if __name__ == '__main__':
-    print(serial_ports())
-
-def IMUreader(Arduino):
-    while True: 
-        try: 
-            line = Arduino.readline().decode('utf-8').replace('\r\n', '')
-        except UnicodeDecodeError: 
-            pass 
-    
-    line = line.split(',')
-    reading = {'t': None, 'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None, 'j': None, 'k': None, 'l': None, 'm': None, 'n': None, 'o': None, 'p': None}
-    
-    for k in range(len(line)): 
-            current_element = line[k].split(':')
-            if current_element[0] in reading: 
-                try:
-                    value = float(current_element[1])
-                except ValueError: 
-                    value = None
-                    print('value converting mistake, exporting')
-                reading[current_element[0]] = value 
-    record = list(reading.values()) 
-    return record
-
 def I2Creader(Arduino): 
     # this function reads string from the port, split into sensor 1 & 2, parse by comma, and match with the dictionary 
     flag = 0
@@ -81,9 +58,9 @@ def I2Creader(Arduino):
         line = Arduino.readline().decode('utf-8').replace('\r\n', '')
         line = line.replace(' ', '')
         line = line.replace('\t', '')
-        print('raw:', line)
+        # print('raw:', line)
         # log only when there is 1 x and 1 y)
-        if line.count('y') == 1 and line.count('x') == 1:
+        if line.count('y') == 1 and line.count('x') == 1 and line.count('t') == 1:
             line = line.split('y')
             line1 = line[0].split(',') # sensor 1
             line2 = line[1].split(',') # sensor 2
@@ -109,10 +86,8 @@ def I2Creader(Arduino):
                 try:
                     value = float(current_element[1])
                     if 't' in current_element[0]: 
-                        current_element[0]
-                        # value = value/1000
                         tnow = value
-                        # print('current time:', tnow)
+                        print('current time:', tnow, 's')
                 except ValueError: 
                     value = None 
                 reading1[header] = value 
@@ -135,14 +110,15 @@ def I2Creader(Arduino):
     record2.insert(0,tnow)
     print('Sensor1:', record1, 'Sensor2:', record2)
     
-    return record1, record2
+    return tnow, record1, record2
+
 
 def DataRead(file_dir): 
     # read raw reading from local csv files 
     with open(file_dir, 'r') as input_file: 
         headers = next(csv.reader(input_file)) 
     columns = defaultdict(list)
-    print('Pulling from database')
+    # print('Pulling from database')
     # read into dict 
     with open(file_dir, 'r') as input_file: 
         for row in csv.DictReader(input_file): # read a row as {column1: value1, column2: value2,...}
@@ -165,21 +141,50 @@ def DataRead(file_dir):
         raw.append(current)
     return raw
 
-class KalmanFilter(object):
-# kalman filter copied from web 
-    def __init__(self, process_variance, estimated_measurement_variance):
-        self.process_variance = process_variance
-        self.estimated_measurement_variance = estimated_measurement_variance
-        self.posteri_estimate = 0.0
-        self.posteri_error_estimate = 1.0
 
-    def input_latest_noisy_measurement(self, measurement):
-        priori_estimate = self.posteri_estimate
-        priori_error_estimate = self.posteri_error_estimate + self.process_variance
+def quaternion_to_rot_mat(quaternion):
+    a, b, c, d = quaternion[0,0], quaternion[0,1], quaternion[0,2], quaternion[0,3]
+    r11 = a*a + b*b - c*c - d*d
+    r12 = 2*b*c - 2*a*d
+    r13 = 2*b*d + 2*a*c
+    r21 = 2*b*c + 2*a*d 
+    r22 = a*a - b*b + c*c - d*d 
+    r23 = 2*c*d - 2*a*b
+    r31 = 2*b*d - 2*a*c 
+    r32 = 2*c*d + 2*a*b 
+    r33 = a*a - b*b - c*c +d*d 
+    rot_mat = np.matrix([[r11, r12, r13], [r21, r22, r23], [r31, r32, r33]])
+    return rot_mat
 
-        blending_factor = priori_error_estimate / (priori_error_estimate + self.estimated_measurement_variance)
-        self.posteri_estimate = priori_estimate + blending_factor * (measurement - priori_estimate)
-        self.posteri_error_estimate = (1 - blending_factor) * priori_error_estimate
 
-    def get_latest_estimated_measurement(self):
-        return self.posteri_estimate
+def integrate(time, data):
+    # integration uses trapezoid rule 
+    # assume measurement is at the beginning of each second
+    # result is the speed at the beginning of each second
+    sides = data[1:,:] + data[0:data.shape[0] - 1]
+    height = time[1:,:] - time[0:time.shape[0]-1]
+    data_int = np.multiply(sides, height)/2
+    zeros = np.matrix(np.zeros(data_int.shape[1]))
+    data_int = np.concatenate((zeros, np.cumsum(data_int, axis = 0)), axis = 0)
+    return data_int
+
+
+def fix_acc(acceleration, quaternion):
+    # fix body frame acceleration to earth frame acceleration
+    # use lin_acc as imput for calculation
+    # use acc for trouble shooting 
+    acc_earth = np.empty(acceleration.shape)
+    for i in range(len(quaternion)):
+        rot_mat = quaternion_to_rot_mat(quaternion[i,:])
+        acc_fixed = np.dot(acceleration[i,:],  np.linalg.inv(rot_mat)) 
+        acc_earth[i,:] = acc_fixed
+    return acc_earth
+
+
+if __name__ == '__main__':
+    print('COM Port:', serial_ports())
+    # test integration module
+    a = np.matrix('3;3;-3;-3;0')
+    b = np.matrix('1;2;3;4;5')
+    v = integrate(b,a)
+    print(integrate(b,a))
