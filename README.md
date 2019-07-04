@@ -12,3 +12,5 @@ This project wouldn't have been completed without our colleagues and professors:
 
 ## 
 Technical detail can be found in our [Final Report] (https://github.com/rw422scarlet/BARR-SYSTEM/blob/master/Design%20Group%2011%20Final%20Report.pdf). 
+
+This site was built using [GitHub Pages](https://pages.github.com/).
