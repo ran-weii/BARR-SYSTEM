@@ -1,23 +1,27 @@
 '''
 ====================================================================
 BARR SYSTEM 
-Function library 
+Basic Functions library 
 
-PLEASE DO NOT EDIT WITHOUT PROPER DISCUSSION WITH THE GROUP 
 ====================================================================
 '''
-
+import os
+import pandas as pd
+import urllib
 import sys 
 import glob 
 import serial 
+import time
 import csv 
 import math
 import numpy as np
 from collections import defaultdict
 import matplotlib.animation as animation 
+from matplotlib import pyplot as plt
+import database_gui as db
 
 #====================================================================
-# Written by Ran Wei @ rw422@rutgers.edu on July 28, 2018 
+# Written by Ran Wei @ rw422@rutgers.edu on December 7, 2018
 #====================================================================
 
 def serial_ports():
@@ -47,103 +51,38 @@ def serial_ports():
                 result.append(port)
         except (OSError, serial.SerialException):
             pass
-    
+    # print(result)
     return result
 
 
-def I2Creader(Arduino): 
-    # this function reads string from the port, split into sensor 1 & 2, parse by comma, and match with the dictionary 
-    flag = 0
-    try: 
-        line = Arduino.readline().decode('utf-8').replace('\r\n', '')
-        line = line.replace(' ', '')
-        line = line.replace('\t', '')
-        # print('raw:', line)
-        # log only when there is 1 x and 1 y)
-        if line.count('y') == 1 and line.count('x') == 1 and line.count('t') == 1:
-            line = line.split('y')
-            line1 = line[0].split(',') # sensor 1
-            line2 = line[1].split(',') # sensor 2
-            # print('sensor1:', line1)
-            # print('sensor2:', line2)
-            flag = 1
+#=====================================================================
+#   Calibration Related Functions 
+#=====================================================================
+
+def manual_calibration(obj, com):
+    ''' arduino in calibration mode, print raw readings 
+    ''' 
+    counter = 0
+    while True: 
+        if com == 'Serial':
+            line = obj.readline().decode('utf-8').replace('\r\n', '')
         else: 
-            pass
-    except UnicodeDecodeError: 
-        pass 
-    # print(line)
-    # define dict/matching format 
-    reading1 = {'t': None, 'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None, 'j': None, 'k': None, 'l': None, 'm': None, 'n': None, 'o': None, 'p': None}
-    reading2 = {'a': None, 'b': None, 'c': None, 'd': None, 'e': None, 'f': None, 'g': None, 'h': None, 'i': None, 'j': None, 'k': None, 'l': None, 'm': None, 'n': None, 'o': None, 'p': None}
-    tnow = None
-    # print('flag:', flag)
-    if flag == 1:
-        # match column title and update dict 
-        for k in range(len(line1)): # sensor 1
-            current_element = line1[k].split(':')
-            header = current_element[0]
-            if header in reading1: 
-                try:
-                    value = float(current_element[1])
-                    if 't' in current_element[0]: 
-                        tnow = value
-                        print('current time:', tnow, 's')
-                except ValueError: 
-                    value = None 
-                reading1[header] = value 
-        
-        for k in range(len(line2)): # sensor 2
-            current_element = line2[k].split(':')
-            header = current_element[0].replace(' ', '')
-            if header in reading2: 
-                try:
-                    value = float(current_element[1])
-                except ValueError: 
-                    value = None
-                    print('value converting mistake, exporting')
-                reading2[header] = value  
-    else: 
-        pass 
-    # convert dict to list 
-    record1 = list(reading1.values())
-    record2 = list(reading2.values())
-    record2.insert(0,tnow)
-    print('Sensor1:', record1, 'Sensor2:', record2)
-    
-    return tnow, record1, record2
+            line = urllib.request.urlopen(obj).read().decode('utf-8').replace('\r', '')
+        print(line)
+        if 'Calibration Results:' in line: 
+            counter +=1 
+            print('One sensor calibrated')
+        if counter == 2:
+            print('Done calibrating')
+            break
 
 
-def DataRead(file_dir): 
-    # read raw reading from local csv files 
-    with open(file_dir, 'r') as input_file: 
-        headers = next(csv.reader(input_file)) 
-    columns = defaultdict(list)
-    # print('Pulling from database')
-    # read into dict 
-    with open(file_dir, 'r') as input_file: 
-        for row in csv.DictReader(input_file): # read a row as {column1: value1, column2: value2,...}
-            for (k,v) in row.items(): # go over each column name and value 
-                columns[k].append(v)
-    raw = []
-    for j in range(len(headers)): 
-        current = []
-        # print('column', j)
-        for i in columns[headers[j]]: 
-            # print(i)
-            try: 
-                current.append(float(i))
-            except ValueError: 
-                current.append(float('NaN'))
-                print('value converting mistake, importing')
-            except TypeError: 
-                current.append(float('NaN'))
-                print('type converting mistake, importing')
-        raw.append(current)
-    return raw
-
+#=====================================================================
+#   Gait Calculations 
+#=====================================================================
 
 def quaternion_to_rot_mat(quaternion):
-    a, b, c, d = quaternion[0,0], quaternion[0,1], quaternion[0,2], quaternion[0,3]
+    a, b, c, d = float(quaternion[:,0]), float(quaternion[:,1]), float(quaternion[:,2]), float(quaternion[:,3])
     r11 = a*a + b*b - c*c - d*d
     r12 = 2*b*c - 2*a*d
     r13 = 2*b*d + 2*a*c
@@ -157,34 +96,67 @@ def quaternion_to_rot_mat(quaternion):
     return rot_mat
 
 
+def fix_acc(acceleration, quaternion):
+    ''' fix body frame acceleration to earth frame acceleration
+        use lin_acc as imput for calculation
+        use acc for trouble shooting 
+    '''
+    rotmat = quaternion_to_rot_mat(quaternion)
+    acc = np.transpose(np.dot(np.linalg.inv(rotmat), np.transpose(acceleration)))
+    ''' uncomment for matrix calculation ''' 
+    # acc_earth = np.empty(acceleration.shape)
+    # for i in range(len(quaternion)):
+    #     rot_mat = quaternion_to_rot_mat(quaternion[i,:])
+    #     acc_fixed = np.dot(acceleration[i,:],  np.linalg.inv(rot_mat)) 
+    #     acc_earth[i,:] = acc_fixed
+    return acc
+
+
 def integrate(time, data):
-    # integration uses trapezoid rule 
-    # assume measurement is at the beginning of each second
-    # result is the speed at the beginning of each second
-    sides = data[1:,:] + data[0:data.shape[0] - 1]
-    height = time[1:,:] - time[0:time.shape[0]-1]
+    ''' integration uses trapezoid rule 
+        assume measurement is at the beginning of each second
+        result is the speed at the beginning of each second
+    '''
+    sides = data[1:,:] + data[0:data.shape[0] - 1,:]
+    height = time[1:,:] - time[0:time.shape[0]-1,:]
     data_int = np.multiply(sides, height)/2
     zeros = np.matrix(np.zeros(data_int.shape[1]))
     data_int = np.concatenate((zeros, np.cumsum(data_int, axis = 0)), axis = 0)
     return data_int
+        
 
+#=====================================================================
+#   file content retrival functions 
+#=====================================================================
 
-def fix_acc(acceleration, quaternion):
-    # fix body frame acceleration to earth frame acceleration
-    # use lin_acc as imput for calculation
-    # use acc for trouble shooting 
-    acc_earth = np.empty(acceleration.shape)
-    for i in range(len(quaternion)):
-        rot_mat = quaternion_to_rot_mat(quaternion[i,:])
-        acc_fixed = np.dot(acceleration[i,:],  np.linalg.inv(rot_mat)) 
-        acc_earth[i,:] = acc_fixed
-    return acc_earth
+def get_files(path, extension):
+    ''' get list of files in path with extension
+    '''
+    os.chdir(path)
+    list_files = [i for i in glob.glob('*.{}'.format(extension))]
+    return list_files
 
+def csv_read(filename, data_type):
+    ''' read csv files and save in list or dictionary
+        list is good for numerical 
+        dictionary is good for tables with headers
+    '''
+    data = pd.read_csv(filename)
+    df = pd.DataFrame(data)
+    if data_type == 'list':
+        raw = np.transpose(np.matrix(df.values.T.tolist()))
+    elif data_type == 'dict':
+        raw = df.to_dict()
+    else:
+        print('ERROR: Wrong data type')
+        return None
+    return raw 
+
+def csv_write(filename, data):
+    df = pd.DataFrame(data)
+    df.to_csv(filename)
 
 if __name__ == '__main__':
-    print('COM Port:', serial_ports())
-    # test integration module
-    a = np.matrix('3;3;-3;-3;0')
-    b = np.matrix('1;2;3;4;5')
-    v = integrate(b,a)
-    print(integrate(b,a))
+    squat = os.path.dirname(os.path.realpath(__file__)) + '/output/Squat/'
+    list_files = get_files(squat, 'csv')
+    data = csv_read(list_files[0], 'list')
