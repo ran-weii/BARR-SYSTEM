@@ -11,4 +11,4 @@ BARR-SYSTEM is a part of the Rutgers ISE Class of 2019 Senior Design. BARR-SYSTE
 This project wouldn't have been completed without our colleagues and professors: Alex Ameri, Prof. Susan Albin, Andrew Benton, Prof. Kimberly Cook-Chennault, Kassem Darwiche, Prof. Mohsen Jafari, Alaaeldin Olleak, Joshua Sosoo, Chi Hong Wong. 
 
 ## 
-Technical detail can be found in our [final report]  (https://drive.google.com/drive/u/0/folders/1ImsDia57kJvgiKfsTfcFO9clh63ptOtG). 
+Technical detail can be found in our [Final Report] (https://github.com/rw422scarlet/BARR-SYSTEM/blob/master/Design%20Group%2011%20Final%20Report.pdf). 
