@@ -9,7 +9,7 @@ BARR-SYSTEM embodies the idea of applying machine learning to real time movement
 <p align="center"><img src="images/barr_interface.png" width="600"></p>
 
 The project overview can be found in our [final presentation](https://docs.google.com/presentation/d/1lwq6di_xf7Fpfg2tNYc-__XR5C5PFBZ8-7M5JFw1V5M/edit?usp=sharing). 
-Complete technical detail can be found in our [final project report](https://drive.google.com/file/d/1XP90V2jUkUDXjpgdI9bchQbZ_EEaV_wm/view?usp=sharing). 
+Complete technical detail can be found in our [final project report](https://docs.google.com/document/d/12TK-7TXqfGl0hneCDIhaFmTNcIG5OOGNiSKYyx8s-78/edit?usp=sharing). 
 
 ## Acknowledgements
 BARR-SYSTEM is a part of the Rutgers Industrial and Systems Engineering Class of 2019 Senior Design. BARR-SYSTEM innovation group consists of the following individuals:
