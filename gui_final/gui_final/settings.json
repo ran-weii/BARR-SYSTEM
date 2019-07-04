@@ -1,0 +1,44 @@
+{
+
+	"universal": {
+		"default_font": "FreeSans",
+		"background": "#CBDBE0",
+		"entry_color": "#FFFFFF",
+		"text_color": "#1C140D",
+		"good_result_color": "#00DA3C",
+		"bad_result_color": "#DF151A"
+	},
+
+	"main_view": {
+		"title": "BARR System",
+		
+		"subtitle": "Health on Track"
+	},
+
+	"info_page": {
+		"title": "Let's Get Started!"
+	},
+
+
+	"exercise_page_1": {
+		"title": "Let's Do Some Evaluation Exercise First",
+		
+		"test_name": "Squat Test",
+		
+		"message": "1. Feet shoulder width apart with head up straight\n2. Sit in squat position bending knee 90deg\n3. Press into feet and straighten leg to stand upright",
+		
+		"graphic": "/Users/apple/Documents/Documents/GitHub/BARR-SYSTEM/gui_final/resources/squat.gif",
+
+		"graphic2": "/Users/apple/Documents/Documents/GitHub/BARR-SYSTEM/gui_final/resources/squat2.gif"
+	},
+
+
+	"result_page": {
+		"title": "Here Are Your Results!",
+
+		"graphic": "/Users/apple/Documents/Documents/GitHub/BARR-SYSTEM/gui_final/resources/result.png",
+		
+		"message": "Placeholder text"
+
+	}
+}
